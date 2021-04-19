@@ -95,6 +95,7 @@ dependencies = [
  "anyhow",
  "chrono",
  "ctrlc",
+ "lazy_static",
  "libbpf-rs",
  "libc",
  "plain",
