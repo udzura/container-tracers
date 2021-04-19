@@ -1,9 +1,29 @@
 use anyhow::Result;
 use libbpf_rs::MapFlags;
 use plain::Plain;
+#[macro_use]
+extern crate lazy_static;
+
+use std::collections::HashMap;
 
 mod bpf;
 use bpf::*;
+
+pub const AUSYSCALL_RESULT: &'static str = include_str!("ausyscall.txt");
+
+lazy_static! {
+    pub static ref SYSCALL2NAME: HashMap<u64, &'static str> = {
+        let mut m = HashMap::new();
+        for line in AUSYSCALL_RESULT.split('\n').into_iter() {
+            let row = line.split('\t').collect::<Vec<&str>>();
+            if let Ok(key) = row[0].parse::<u64>() {
+                let value = row[1];
+                m.insert(key, value);
+            }
+        }
+        m
+    };
+}
 
 #[repr(C)]
 #[derive(Default, Debug)]
@@ -40,7 +60,10 @@ fn main() -> Result<()> {
             plain::copy_from_bytes(&mut key_, &key).expect("invalid key bytes");
             let mut value_ = Value::default();
             plain::copy_from_bytes(&mut value_, &value).expect("invalid value bytes");
-            println!("key={:?}, value={:?}", key_, value_);
+            println!(
+                "tid={}, syscall={}, value={:?}",
+                key_.tid, SYSCALL2NAME[&key_.syscall_nr], value_
+            );
         }
     }
 
