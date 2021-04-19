@@ -7,3 +7,10 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+libc = ">= 0"
+ctrlc = ">= 0"
+anyhow = ">= 1"
+plain = "0.2.3"
+chrono = ">= 0"
+structopt = ">= 0"
+libbpf-rs = { git = "https://github.com/libbpf/libbpf-rs.git" }
