@@ -12,6 +12,8 @@ struct leaf_t{
   u64 enter_ns;
 };
 
+const volatile u64 targ_cgid = 0;
+
 struct {
   __uint(type, BPF_MAP_TYPE_HASH);
   __uint(max_entries, 30000);
@@ -22,6 +24,9 @@ struct {
 SEC("tracepoint/raw_syscalls/sys_enter")
 int tracepoint__raw_syscalls__sys_enter(struct trace_event_raw_sys_enter* ctx)
 {
+  if (targ_cgid != 0 && targ_cgid != bpf_get_current_cgroup_id())
+    goto cleanup;
+
   struct key_t key = {0};
   struct leaf_t initial = {0}, val, *val_;
   key.tid = bpf_get_current_pid_tgid();

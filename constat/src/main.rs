@@ -1,10 +1,13 @@
 use anyhow::Result;
 use libbpf_rs::MapFlags;
 use plain::Plain;
+use structopt::StructOpt;
+
 #[macro_use]
 extern crate lazy_static;
 
 use std::collections::HashMap;
+use std::{mem, slice};
 
 mod bpf;
 use bpf::*;
@@ -25,6 +28,13 @@ lazy_static! {
     };
 }
 
+#[derive(Debug, StructOpt)]
+struct Command {
+    /// Target cgroup directory to track
+    #[structopt(short = "c", value_name = "CGROUP_DIR")]
+    cgroup_dir: Option<String>,
+}
+
 #[repr(C)]
 #[derive(Default, Debug)]
 struct Key {
@@ -42,15 +52,44 @@ struct Value {
 }
 unsafe impl Plain for Value {}
 
+#[repr(C)]
+#[derive(Default, Debug)]
+struct CgidFileHandle {
+    pub handle_bytes: u32,
+    pub handle_type: i32,
+    pub cgid: u64,
+}
+unsafe impl Plain for CgidFileHandle {}
+
 fn main() -> Result<()> {
+    let opts: Command = Command::from_args();
+
     let mut skel_builder: ConstatSkelBuilder = ConstatSkelBuilder::default();
     let mut open_skel: OpenConstatSkel = skel_builder.open()?;
-    // open_skel.rodata()...
+
+    if let Some(dir) = opts.cgroup_dir {
+        let mut handle = nc::types::file_handle_t::default();
+        handle.handle_bytes = 8;
+        let mut _mount_id = 0i32;
+
+        nc::name_to_handle_at(nc::types::AT_FDCWD, &dir, &mut handle, &mut _mount_id, 0)
+            .expect("Cannot find cgid");
+
+        let mut dist = CgidFileHandle::default();
+        unsafe {
+            let bptr = &handle as *const nc::types::file_handle_t as *const u8;
+            let bsize = mem::size_of_val(&dist);
+            let data = slice::from_raw_parts(bptr, bsize);
+
+            plain::copy_from_bytes(&mut dist, &data).expect("Invalid file handle");
+        }
+        open_skel.rodata().targ_cgid = dist.cgid;
+    }
 
     let mut skel: ConstatSkel = open_skel.load()?;
     skel.attach()?;
 
-    std::thread::sleep(std::time::Duration::from_secs(1));
+    std::thread::sleep(std::time::Duration::from_secs(10));
 
     let mut maps = skel.maps();
     let mut dist = maps.dist();

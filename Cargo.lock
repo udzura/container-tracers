@@ -98,6 +98,7 @@ dependencies = [
  "lazy_static",
  "libbpf-rs",
  "libc",
+ "nc",
  "plain",
  "structopt",
 ]
@@ -181,6 +182,15 @@ name = "libc"
 version = "0.2.93"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9385f66bf6105b241aa65a61cb923ef20efc665cb9f9bb50ac2f0c4b7f378d41"
+
+[[package]]
+name = "nc"
+version = "0.6.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "513aaa1a95469f86db3b008b53f718bbe93ee80584ef725abe63f4f4173089f0"
+dependencies = [
+ "cc",
+]
 
 [[package]]
 name = "nix"
