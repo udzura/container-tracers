@@ -448,6 +448,7 @@ dependencies = [
  "lazy_static",
  "libbpf-rs",
  "libc",
+ "nix 0.17.0",
  "plain",
  "structopt",
 ]

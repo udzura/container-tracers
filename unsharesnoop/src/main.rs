@@ -1,5 +1,7 @@
 use core::time::Duration;
 use std::str;
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::Arc;
 
 use anyhow::{bail, Result};
 use chrono::{Local, SecondsFormat};
@@ -94,6 +96,12 @@ fn main() -> Result<()> {
     }
     let mut skel = open_skel.load()?;
 
+    let running = Arc::new(AtomicBool::new(true));
+    let r = running.clone();
+    ctrlc::set_handler(move || {
+        r.store(false, Ordering::SeqCst);
+    })?;
+
     println!(
         "{:20} {:6} {:18} {:3} {:10} {}",
         "TIME", "TID", "COMM", "RET", "FLAGS", "FLAGS(human)"
@@ -105,9 +113,24 @@ fn main() -> Result<()> {
         .lost_cb(handle_lost_events)
         .build()?;
 
-    loop {
-        perf.poll(Duration::from_millis(100))?;
+    while running.load(Ordering::SeqCst) {
+        if let Err(e) = perf.poll(Duration::from_millis(100)) {
+            use nix::errno::Errno;
+
+            if let libbpf_rs::Error::System(errno) = e {
+                let e = Errno::from_i32(errno);
+                match e {
+                    // Ignore EINTER
+                    Errno::EINTR => (),
+                    _ => bail!("Error: {:?}", e),
+                }
+            } else {
+                bail!("Error: {:?}", e);
+            }
+        }
     }
+    println!("");
+    println!("Stopped");
 
     Ok(())
 }
