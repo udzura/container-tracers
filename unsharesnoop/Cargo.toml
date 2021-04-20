@@ -1,0 +1,19 @@
+[package]
+name = "unsharesnoop"
+version = "0.1.0"
+authors = ["Uchio Kondo <udzura@udzura.jp>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+libc = ">= 0"
+# nc = ">= 0.6"
+ctrlc = ">= 0"
+anyhow = ">= 1"
+plain = "0.2.3"
+chrono = ">= 0"
+structopt = ">= 0"
+libbpf-rs = { git = "https://github.com/libbpf/libbpf-rs.git" }
+lazy_static = ">= 0"
+bitflags = ">= 1.2"

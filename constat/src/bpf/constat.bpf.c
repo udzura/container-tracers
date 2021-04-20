@@ -68,3 +68,5 @@ int tracepoint__raw_syscalls__sys_exit(struct trace_event_raw_sys_exit* ctx)
   }
   return 0;
 }
+
+char LICENSE[] SEC("license") = "GPL";
