@@ -7,6 +7,8 @@ use structopt::StructOpt;
 extern crate lazy_static;
 
 use std::collections::HashMap;
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::Arc;
 use std::{mem, slice};
 
 mod bpf;
@@ -95,7 +97,15 @@ fn main() -> Result<()> {
     let mut skel: ConstatSkel = open_skel.load()?;
     skel.attach()?;
 
-    std::thread::sleep(std::time::Duration::from_secs(10));
+    let running = Arc::new(AtomicBool::new(true));
+    let r = running.clone();
+    ctrlc::set_handler(move || {
+        r.store(false, Ordering::SeqCst);
+    })?;
+
+    println!("Collecting events... Ctrl-C to stop and show stat");
+    while running.load(Ordering::SeqCst) {}
+    println!("");
 
     let mut maps = skel.maps();
     let mut all = Countup(0, 0);
