@@ -149,12 +149,29 @@ fn main() -> Result<()> {
         });
     }
 
-    println!("{:16} {:>6} {:>11}", "SYSCALL", "COUNT", "ELAPSED(ms)");
+    println!(
+        "{:16} {:>6} {:>6} {:>11} {:>6}",
+        "SYSCALL", "COUNT", "(%)", "ELAPSED(ms)", "(%)"
+    );
     for key in keys.into_iter() {
         let value = &collector.get(key).unwrap();
         let elapsed = (value.1 as f64 / 1000f64) / 1000f64;
-        println!("{:16} {:6} {:11.3}", SYSCALL2NAME[key], value.0, elapsed);
+
+        let ratio_count = value.0 as f64 / all.0 as f64 * 100f64;
+        let ratio_elap = value.1 as f64 / all.1 as f64 * 100f64;
+
+        println!(
+            "{:16} {:6} {:5.2}% {:11.3} {:5.2}%",
+            SYSCALL2NAME[key], value.0, ratio_count, elapsed, ratio_elap
+        );
     }
+
+    let elapsed = (all.1 as f64 / 1000f64) / 1000f64;
+    println!("----------------");
+    println!(
+        "{:16} {:6} {:>6} {:11.3} {:>6}",
+        "ALL", all.0, "---", elapsed, "---"
+    );
 
     Ok(())
 }
