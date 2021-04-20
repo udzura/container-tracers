@@ -33,6 +33,9 @@ struct Command {
     /// Target cgroup directory to track
     #[structopt(short = "c", value_name = "CGROUP_DIR")]
     cgroup_dir: Option<String>,
+    /// Sort by elapsed time instead of count
+    #[structopt(short = "t")]
+    sort_by_elapsed: bool,
 }
 
 #[repr(C)]
@@ -61,10 +64,12 @@ struct CgidFileHandle {
 }
 unsafe impl Plain for CgidFileHandle {}
 
+struct Countup(u64, u64);
+
 fn main() -> Result<()> {
     let opts: Command = Command::from_args();
 
-    let mut skel_builder: ConstatSkelBuilder = ConstatSkelBuilder::default();
+    let skel_builder: ConstatSkelBuilder = ConstatSkelBuilder::default();
     let mut open_skel: OpenConstatSkel = skel_builder.open()?;
 
     if let Some(dir) = opts.cgroup_dir {
@@ -72,6 +77,7 @@ fn main() -> Result<()> {
         handle.handle_bytes = 8;
         let mut _mount_id = 0i32;
 
+        // FIXME: find cgroup id by inode nr...
         nc::name_to_handle_at(nc::types::AT_FDCWD, &dir, &mut handle, &mut _mount_id, 0)
             .expect("Cannot find cgid");
 
@@ -92,18 +98,52 @@ fn main() -> Result<()> {
     std::thread::sleep(std::time::Duration::from_secs(10));
 
     let mut maps = skel.maps();
-    let mut dist = maps.dist();
+    let mut all = Countup(0, 0);
+    let dist = maps.dist();
+    let mut collector = HashMap::new();
+
     for key in dist.keys() {
         if let Some(value) = dist.lookup(&key, MapFlags::empty())? {
             let mut key_ = Key::default();
             plain::copy_from_bytes(&mut key_, &key).expect("invalid key bytes");
             let mut value_ = Value::default();
             plain::copy_from_bytes(&mut value_, &value).expect("invalid value bytes");
-            println!(
-                "tid={}, syscall={}, value={:?}",
-                key_.tid, SYSCALL2NAME[&key_.syscall_nr], value_
-            );
+
+            if !collector.contains_key(&key_.syscall_nr) {
+                collector.insert(key_.syscall_nr, Countup(0, 0));
+            }
+            all.0 += value_.count;
+            all.1 += value_.elapsed_ns;
+
+            let mut current = collector.get_mut(&key_.syscall_nr).unwrap();
+            current.0 += value_.count;
+            current.1 += value_.elapsed_ns;
         }
+    }
+    let mut keys = collector.keys().collect::<Vec<&u64>>();
+    if opts.sort_by_elapsed {
+        keys.sort_by(|a, b| {
+            collector
+                .get(b)
+                .unwrap()
+                .1
+                .cmp(&collector.get(a).unwrap().1)
+        });
+    } else {
+        keys.sort_by(|a, b| {
+            collector
+                .get(b)
+                .unwrap()
+                .0
+                .cmp(&collector.get(a).unwrap().0)
+        });
+    }
+
+    println!("{:16} {:>6} {:>11}", "SYSCALL", "COUNT", "ELAPSED(ms)");
+    for key in keys.into_iter() {
+        let value = &collector.get(key).unwrap();
+        let elapsed = (value.1 as f64 / 1000f64) / 1000f64;
+        println!("{:16} {:6} {:11.3}", SYSCALL2NAME[key], value.0, elapsed);
     }
 
     Ok(())
