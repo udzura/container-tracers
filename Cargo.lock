@@ -96,6 +96,7 @@ dependencies = [
  "nc",
  "plain",
  "structopt",
+ "textplots",
 ]
 
 [[package]]
@@ -133,6 +134,18 @@ dependencies = [
  "quote",
  "syn",
 ]
+
+[[package]]
+name = "drawille"
+version = "0.2.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "81e127c19c76f5610bb32f6a5f5d1ce5a5374fedba554f05cf5599e3041cd634"
+
+[[package]]
+name = "fnv"
+version = "1.0.7"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3f9eec918d3f24069decb9af1554cad7c880e2da24a9afd88aca000531ab82c1"
 
 [[package]]
 name = "gcc"
@@ -194,6 +207,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9385f66bf6105b241aa65a61cb923ef20efc665cb9f9bb50ac2f0c4b7f378d41"
 
 [[package]]
+name = "meval"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f79496a5651c8d57cd033c5add8ca7ee4e3d5f7587a4777484640d9cb60392d9"
+dependencies = [
+ "fnv",
+ "nom",
+]
+
+[[package]]
 name = "nc"
 version = "0.6.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -226,6 +249,12 @@ dependencies = [
  "cfg-if 1.0.0",
  "libc",
 ]
+
+[[package]]
+name = "nom"
+version = "1.2.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a5b8c256fd9471521bcb84c3cdba98921497f1a331cbc15b8030fc63b82050ce"
 
 [[package]]
 name = "num-integer"
@@ -385,6 +414,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "textplots"
+version = "0.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a1c88028fbb77f68f0ca60a56c2bad55ed89b5a8f3e37044b71eb56fe841dcba"
+dependencies = [
+ "drawille",
+ "meval",
+ "structopt",
+]
+
+[[package]]
 name = "textwrap"
 version = "0.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -462,7 +502,7 @@ dependencies = [
  "lazy_static",
  "libbpf-rs",
  "libc",
- "nix 0.17.0",
+ "nix 0.20.0",
  "plain",
  "structopt",
 ]

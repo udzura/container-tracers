@@ -15,4 +15,5 @@ plain = "0.2.3"
 chrono = ">= 0"
 structopt = ">= 0"
 libbpf-rs = { git = "https://github.com/libbpf/libbpf-rs.git" }
+textplots = ">= 0"
 # lazy_static = ">= 0"
