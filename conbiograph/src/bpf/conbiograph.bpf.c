@@ -41,6 +41,9 @@ static int trace_rq_issue(struct request *rq)
 SEC("tp_btf/block_rq_issue")
 int BPF_PROG(block_rq_issue)
 {
+  if(targ_cgid != 0 && targ_cgid != bpf_get_current_cgroup_id())
+    return 0;
+
   /**
    * commit a54895fa (v5.11-rc1) changed tracepoint argument list
    * from TP_PROTO(struct request_queue *q, struct request *rq)

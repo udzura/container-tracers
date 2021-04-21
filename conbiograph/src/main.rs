@@ -15,6 +15,9 @@ use bpf::*;
 
 #[derive(Debug, StructOpt)]
 struct Command {
+    /// Target cgroup directory to track
+    #[structopt(short = "c", value_name = "CGROUP_DIR")]
+    cgroup_dir: Option<String>,
     /// Show operation count instead of bytesize
     #[structopt(long = "count")]
     show_count: bool,
@@ -45,7 +48,16 @@ fn main() -> Result<()> {
     let opts: Command = Command::from_args();
 
     let skel_builder: ConbiographSkelBuilder = ConbiographSkelBuilder::default();
-    let open_skel = skel_builder.open()?;
+    let mut open_skel = skel_builder.open()?;
+
+    if let Some(dir) = opts.cgroup_dir {
+        use std::fs;
+        use std::os::unix::fs::MetadataExt;
+        let meta = fs::metadata(dir)?;
+        let ino = meta.ino();
+
+        open_skel.rodata().targ_cgid = ino;
+    }
 
     let mut skel = open_skel.load()?;
     skel.attach()?;
