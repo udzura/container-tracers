@@ -89,7 +89,7 @@ Collecting events in 500 ms... Ctrl-C to stop and show stat
 
 ![demo.gif](demo.gif)
 
-## LISENCE
+## LICENSE
 
 MIT. See LICENSE.
 
